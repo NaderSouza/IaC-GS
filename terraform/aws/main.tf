@@ -127,14 +127,14 @@ data "template_file" "user_data" {
 
 # LOAD BALANCER 
 
-resource "aws_lb" "lb-1" {
+resource "aws_lb" "lb" {
   name               = "lb-1"
   load_balancer_type = "application"
   subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
   security_groups    = [aws_security_group.sg.id]
 }
 
-resource "aws_lb_target_group" "tg-1" {
+resource "aws_lb_target_group" "tg" {
   name     = "tg-1"
   protocol = "HTTP"
   port     = "80"
