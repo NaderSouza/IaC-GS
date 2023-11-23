@@ -115,6 +115,8 @@ resource "aws_efs_mount_target" "mount2" {
   security_groups = [aws_security_group.sg.id]
 }
 
+
+
 # DATA # -----------------------------------------------------------------------------------------
 
 data "template_file" "user_data" {
@@ -151,4 +153,5 @@ resource "aws_lb_listener" "ec2_lb_listener" {
     target_group_arn = aws_lb_target_group.tg.arn
   }
 }
+
 
