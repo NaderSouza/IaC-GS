@@ -119,65 +119,9 @@ resource "aws_efs_mount_target" "mount2" {
 
 data "template_file" "user_data" {
   template = file("./script/user_data.sh")
-  vars = {
-    efs_id = aws_efs_file_system.efs.id
-  }
 }
 
-# RESOURCE: EC2
-# data "template_file" "user_data" {
-#     template = "${file("./scripts/user_data.sh")}"
-# }
 
-# EC2 INSTANCE 
-
-# resource "aws_instance" "instance-1a" {
-#     ami                    = "ami-00c39f71452c08778"
-#     instance_type          = "t2.micro"
-#     subnet_id              = aws_subnet.sn_pub_az1a.id
-#     vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
-#     user_data              = "${base64encode(data.template_file.user_data.rendered)}"
-#     key_name               = "vockey"
-# }
-
-# resource "aws_instance" "instance-2a" {
-#     ami                    = "ami-00c39f71452c08778"
-#     instance_type          = "t2.micro"
-#     subnet_id              = aws_subnet.sn_pub_az2a.id
-#     vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
-#     user_data              = "${base64encode(data.template_file.user_data.rendered)}"
-#     key_name               = "vockey"
-# }
-
-# -----------------------------------------------------------------------------------------
-
-# resource "aws_instance" "instance-1b" {
-#     ami                    = "ami-00c39f71452c08778"
-#     instance_type          = "t2.micro"
-#     subnet_id              = aws_subnet.sn_pub_az1b.id
-#     vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
-#     user_data              = "${base64encode(data.template_file.user_data.rendered)}"
-#     key_name               = "vockey"
-# }
-
-
-resource "aws_launch_template" "lt" {
-  name                   = "ltemplate"
-  image_id               = "ami-02e136e904f3da870"
-  instance_type          = "t2.micro"
-  key_name               = "vockey"
-  user_data              = base64encode(data.template_file.user_data.rendered)
-  vpc_security_group_ids = [aws_security_group.sg.id]
-}
-
-# resource "aws_instance" "instance-2b" {
-#     ami                    = "ami-00c39f71452c08778"
-#     instance_type          = "t2.micro"
-#     subnet_id              = aws_subnet.sn_pub_az2b.id
-#     vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
-#     user_data              = "${base64encode(data.template_file.user_data.rendered)}"
-#     key_name               = "vockey"
-# }
 
 # LOAD BALANCER 
 
