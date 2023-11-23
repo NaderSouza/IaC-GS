@@ -125,9 +125,9 @@ data "template_file" "user_data" {
 }
 
 # RESOURCE: EC2
-data "template_file" "user_data" {
-    template = "${file("./scripts/user_data.sh")}"
-}
+# data "template_file" "user_data" {
+#     template = "${file("./scripts/user_data.sh")}"
+# }
 
 # EC2 INSTANCE 
 
