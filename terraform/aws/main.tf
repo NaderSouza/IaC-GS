@@ -117,17 +117,17 @@ resource "aws_efs_mount_target" "mount2" {
 
 # DATA # -----------------------------------------------------------------------------------------
 
-# data "template_file" "user_data" {
-#   template = file("./scripts/user_data.sh")
-#   vars = {
-#     efs_id = aws_efs_file_system.efs.id
-#   }
-# }
+data "template_file" "user_data" {
+  template = file("./scripts/user_data.sh")
+  vars = {
+    efs_id = aws_efs_file_system.efs.id
+  }
+}
 
 # RESOURCE: EC2
-# data "template_file" "user_data" {
-#     template = "${file("./scripts/user_data.sh")}"
-# }
+data "template_file" "user_data" {
+    template = "${file("./scripts/user_data.sh")}"
+}
 
 # EC2 INSTANCE 
 
