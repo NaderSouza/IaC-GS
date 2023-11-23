@@ -115,19 +115,21 @@ resource "aws_efs_mount_target" "mount2" {
   security_groups = [aws_security_group.sg.id]
 }
 
-data "template_file" "user_data" {
-  template = file("./scripts/user_data.sh")
-  vars = {
-    efs_id = aws_efs_file_system.efs.id
-  }
-}
+# DATA # -----------------------------------------------------------------------------------------
 
-# EC2 INSTANCE 
+# data "template_file" "user_data" {
+#   template = file("./scripts/user_data.sh")
+#   vars = {
+#     efs_id = aws_efs_file_system.efs.id
+#   }
+# }
 
 # RESOURCE: EC2
 # data "template_file" "user_data" {
 #     template = "${file("./scripts/user_data.sh")}"
 # }
+
+# EC2 INSTANCE 
 
 resource "aws_instance" "instance-1a" {
     ami                    = "ami-00c39f71452c08778"
