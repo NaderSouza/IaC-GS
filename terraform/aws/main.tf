@@ -125,9 +125,9 @@ data "template_file" "user_data" {
 # EC2 INSTANCE 
 
 # RESOURCE: EC2
-data "template_file" "user_data" {
-    template = "${file("./scripts/user_data.sh")}"
-}
+# data "template_file" "user_data" {
+#     template = "${file("./scripts/user_data.sh")}"
+# }
 
 resource "aws_instance" "instance-1a" {
     ami                    = "ami-00c39f71452c08778"
