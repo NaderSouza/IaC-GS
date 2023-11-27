@@ -1,70 +1,24 @@
-data "aws_caller_identity" "current" {}
-
-resource "aws_vpc" "vpc" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = "true"
-}
-
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc.id
-}
-
-resource "aws_subnet" "sn1" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = "true"
-  availability_zone       = "us-east-1a"
-}
-
-resource "aws_subnet" "sn2" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = "10.0.3.0/24"
-  map_public_ip_on_launch = "true"
-  availability_zone       = "us-east-1c"
-}
-
-resource "aws_route_table" "rt" {
-  vpc_id = aws_vpc.vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-}
-
-resource "aws_route_table_association" "rt_sn1" {
-  subnet_id      = aws_subnet.sn1.id
-  route_table_id = aws_route_table.rt.id
-}
-
-resource "aws_route_table_association" "rt_sn2" {
-  subnet_id      = aws_subnet.sn2.id
-  route_table_id = aws_route_table.rt.id
-}
-
-resource "aws_security_group" "sg" {
-  name        = "sg"
-  description = "sg"
-  vpc_id      = aws_vpc.vpc.id
+# Grupo de Segurança que permitir o tráfego HTTP e SSH
+resource "aws_security_group" "allow_http" {
+  name        = "allow_http"
+  description = "Allow HTTP inbound traffic"
 
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -73,48 +27,48 @@ resource "aws_security_group" "sg" {
   }
 }
 
-resource "aws_efs_file_system" "efs" {
-  #  availability_zone_name = "us-east-1a"
-  encrypted = false
+# Criação das Instâncias EC2 em uma única zona de disponibilidade
+resource "aws_instance" "web" {
+  count                  = 2
+  ami                    = "ami-02e136e904f3da870"
+  instance_type          = "t2.micro"
+  security_groups        = [aws_security_group.allow_http.name]
+  availability_zone      = "us-east-1a"
+
+
+
 }
 
-resource "aws_efs_file_system_policy" "efs_policy" {
-  file_system_id                     = aws_efs_file_system.efs.id
-  bypass_policy_lockout_safety_check = true
-  policy                             = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Id": "efs-policy-efs",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "*"
-            },
-            "Action": [
-                "elasticfilesystem:*"
-            ],
-            "Resource": [
-                "arn:aws:elasticfilesystem:us-east-1:${data.aws_caller_identity.current.account_id}:file-system/${aws_efs_file_system.efs.id}"
-            ]
-        }
-    ]
-}
-POLICY
-}
+# Load Balancer em uma única zona de disponibilidade
+resource "aws_elb" "web_elb" {
+  name               = "web-nader-lb"
+  availability_zones = ["us-east-1a"]
 
-resource "aws_efs_mount_target" "mount1" {
-  file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = aws_subnet.sn1.id
-  security_groups = [aws_security_group.sg.id]
-}
+  listener {
+    instance_port     = 80
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
 
-resource "aws_efs_mount_target" "mount2" {
-  file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = aws_subnet.sn2.id
-  security_groups = [aws_security_group.sg.id]
-}
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "HTTP:80/"
+    interval            = 30
+  }
 
+  instances                   = aws_instance.web.*.id
+  cross_zone_load_balancing   = true
+  idle_timeout                = 400
+  connection_draining         = true
+  connection_draining_timeout = 400
+
+  tags = {
+    Name = "web-nader-lb"
+  }
+}
 
 
 # DATA # -----------------------------------------------------------------------------------------
@@ -129,30 +83,30 @@ data "template_file" "user_data" {
 
 # LOAD BALANCER 
 
-resource "aws_lb" "lb" {
-  name               = "lb-3"
-  load_balancer_type = "application"
-  subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
-  security_groups    = [aws_security_group.sg.id]
-}
+# resource "aws_lb" "lb" {
+#   name               = "lb-1"
+#   load_balancer_type = "application"
+#   subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
+#   security_groups    = [aws_security_group.sg.id]
+# }
 
-resource "aws_lb_target_group" "tg" {
-  name     = "tg-3"
-  protocol = "HTTP"
-  port     = "80"
-  vpc_id   = aws_vpc.vpc.id
-}
+# resource "aws_lb_target_group" "tg" {
+#   name     = "tg-1"
+#   protocol = "HTTP"
+#   port     = "80"
+#   vpc_id   = aws_vpc.vpc.id
+# }
 
-resource "aws_lb_listener" "ec2_lb_listener" {
-  protocol          = "HTTP"
-  port              = "80"
-  load_balancer_arn = aws_lb.lb.arn
+# resource "aws_lb_listener" "ec2_lb_listener" {
+#   protocol          = "HTTP"
+#   port              = "80"
+#   load_balancer_arn = aws_lb.lb.arn
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.tg.arn
-  }
-}
+#   default_action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.tg.arn
+#   }
+# }
 
 
 
