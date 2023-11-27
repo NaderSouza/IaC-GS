@@ -35,13 +35,22 @@ resource "aws_instance" "web" {
   security_groups        = [aws_security_group.allow_http.name]
   availability_zone      = "us-east-1a"
 
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo 'Amém irmãos, deu certo!!!' > /var/www/html/index.html
+              EOF
 
-
+  tags = {
+    Name = "web-${count.index}"
+  }
 }
 
 # Load Balancer em uma única zona de disponibilidade
 resource "aws_elb" "web_elb" {
-  name               = "web-nader-lb"
+  name               = "web-elb"
   availability_zones = ["us-east-1a"]
 
   listener {
@@ -66,47 +75,6 @@ resource "aws_elb" "web_elb" {
   connection_draining_timeout = 400
 
   tags = {
-    Name = "web-nader-lb"
+    Name = "web-elb"
   }
 }
-
-
-# DATA # -----------------------------------------------------------------------------------------
-
-data "template_file" "user_data" {
-  template = file("./script/user_data.sh")
-  vars = {
-    efs_id = aws_efs_file_system.efs.id
-  }
-}
-
-
-# LOAD BALANCER 
-
-# resource "aws_lb" "lb" {
-#   name               = "lb-1"
-#   load_balancer_type = "application"
-#   subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
-#   security_groups    = [aws_security_group.sg.id]
-# }
-
-# resource "aws_lb_target_group" "tg" {
-#   name     = "tg-1"
-#   protocol = "HTTP"
-#   port     = "80"
-#   vpc_id   = aws_vpc.vpc.id
-# }
-
-# resource "aws_lb_listener" "ec2_lb_listener" {
-#   protocol          = "HTTP"
-#   port              = "80"
-#   load_balancer_arn = aws_lb.lb.arn
-
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.tg.arn
-#   }
-# }
-
-
-
