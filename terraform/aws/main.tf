@@ -185,3 +185,4 @@ resource "aws_autoscaling_group" "asg" {
     aws_efs_mount_target.mount2
   ]
 }
+
