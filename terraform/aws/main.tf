@@ -31,7 +31,7 @@ resource "aws_security_group" "allow_http" {
 }
 
 # Criação das Instâncias EC2 em uma única zona de disponibilidade
-resource "aws_instance" "site" {
+resource "aws_instance" "web" {
   count                  = 2
   ami                    = "ami-02e136e904f3da870"
   instance_type          = "t2.micro"
