@@ -47,7 +47,7 @@ data "template_file" "user_data" {
 
 # Load Balancer em uma única zona de disponibilidade
 resource "aws_elb" "web_elb" {
-  name               = "web-elb-2"
+  name               = "web-elb"
   availability_zones = ["us-east-1a"]
 
   listener {
@@ -71,7 +71,7 @@ resource "aws_elb" "web_elb" {
   connection_draining         = true
   connection_draining_timeout = 400
 
-  tags = {
-    Name = "web-elb"
-  }
+  # tags = {
+  #   Name = "web-elb"
+  # }
 }
