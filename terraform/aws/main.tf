@@ -145,7 +145,7 @@ resource "aws_launch_template" "lt" {
 # LOAD BALANCER 
 
 resource "aws_lb" "lb" {
-  name               = "lb"
+  name               = "lb-nader"
   load_balancer_type = "application"
   subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
   security_groups    = [aws_security_group.sg.id]
@@ -170,7 +170,7 @@ resource "aws_lb_listener" "ec2_lb_listener" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  name                = "asg"
+  name                = "asg-nader"
   desired_capacity    = "4"
   min_size            = "2"
   max_size            = "8"
