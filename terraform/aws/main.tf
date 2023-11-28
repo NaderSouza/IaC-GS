@@ -26,27 +26,23 @@ resource "aws_security_group" "allow_http" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+
 }
 
 # Criação das Instâncias EC2 em uma única zona de disponibilidade
-resource "aws_instance" "web" {
+resource "aws_instance" "site" {
   count                  = 2
   ami                    = "ami-02e136e904f3da870"
   instance_type          = "t2.micro"
   security_groups        = [aws_security_group.allow_http.name]
   availability_zone      = "us-east-1a"
 
-  user_data = <<-EOF
-              #!/bin/bash
-              yum install -y httpd
-              systemctl start httpd
-              systemctl enable httpd
-              echo 'Amém irmãos, deu certo!!!' > /var/www/html/index.html
-              EOF
+}
 
-  tags = {
-    Name = "web-${count.index}"
-  }
+data "template_file" "user_data" {
+  template = file("./script/user_data.sh")
+
 }
 
 # Load Balancer em uma única zona de disponibilidade
@@ -75,7 +71,7 @@ resource "aws_elb" "web_elb" {
   connection_draining         = true
   connection_draining_timeout = 400
 
-  tags = {
-    Name = "web-elb"
-  }
+  # tags = {
+  #   Name = "web-elb"
+  # }
 }
