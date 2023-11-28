@@ -125,7 +125,7 @@ data "template_file" "user_data" {
 
 
 resource "aws_launch_template" "lt" {
-  name                   = "ltemplate"
+  name                   = "ltemplate-nader"
   image_id               = "ami-02e136e904f3da870"
   instance_type          = "t2.micro"
   key_name               = "vockey"
@@ -152,7 +152,7 @@ resource "aws_lb" "lb" {
 }
 
 resource "aws_lb_target_group" "tg" {
-  name     = "tg"
+  name     = "tg-nader"
   protocol = "HTTP"
   port     = "80"
   vpc_id   = aws_vpc.vpc.id
