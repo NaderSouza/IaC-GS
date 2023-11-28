@@ -1,8 +1,8 @@
 # Grupo de Segurança que permitir o tráfego HTTP e SSH
 resource "aws_security_group" "allow_http" {
-  name        = "allow_http"
+  name        = "sg-teste-gs"
   description = "Allow HTTP inbound traffic"
-  vpc_id      = "nader-gs"
+
 
   ingress {
     description = "HTTP"
