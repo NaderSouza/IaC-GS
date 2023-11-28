@@ -1,6 +1,6 @@
 # Grupo de Segurança que permitir o tráfego HTTP e SSH
 resource "aws_security_group" "allow_http" {
-  name        = "sg-teste-gs"
+  name        = "sg_teste_gs"
   description = "Allow HTTP inbound traffic"
 
 
