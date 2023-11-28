@@ -1,12 +1,19 @@
 #!/bin/bash
+    
+echo "Update with latest packages"
 yum update -y
-amazon-linux-extras install -y php7.2 epel
-yum install -y httpd telnet tree git
-
+    
+echo "Install Apache"
+yum install -y httpd git
+    
+echo "Enable Apache service to start after reboot"
+sudo systemctl enable httpd
+    
+echo "Install application"
 cd /tmp
 git clone https://github.com/NaderSouza/IaC-GS
 mkdir /var/www/html
 cp /tmp/IaC-GS/app/*.html /var/www/html
 
-systemctl enable httpd
+echo "Start Apache service"
 service httpd restart

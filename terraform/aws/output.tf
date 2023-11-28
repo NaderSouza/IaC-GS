@@ -28,3 +28,8 @@
 #   value       = module.elb.elb_zone_id
 # }
 
+
+output "lb_dns_name" {
+  value = aws_lb.lb.dns_name
+}
+
