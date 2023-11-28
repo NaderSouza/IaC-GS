@@ -42,11 +42,15 @@ resource "aws_route_table_association" "rt_sn2" {
   route_table_id = aws_route_table.rt.id
 }
 
+
+# DATA  # --------------- SEMPRE ALTERAR QUANDO FOR SUBIR NOVAMENTE -  SECURITY GROUP
 resource "aws_security_group" "sg" {
   name        = "sg"
   description = "sg"
   vpc_id      = aws_vpc.vpc.id
 
+
+# ------------------------------------------------------------------------------------
   ingress {
     from_port   = 0
     to_port     = 0
@@ -115,13 +119,11 @@ resource "aws_efs_mount_target" "mount2" {
   security_groups = [aws_security_group.sg.id]
 }
 
-# DATA # -----------------------------------------------------------------------------------------
-
+# DATA  # --------------- SEMPRE ALTERAR QUANDO FOR SUBIR NOVAMENTE - LT - LB - TG - ASG
 data "template_file" "user_data" {
   template = file("./script/user_data.sh")
 
 }
-
 
 
 resource "aws_launch_template" "lt" {
@@ -133,14 +135,6 @@ resource "aws_launch_template" "lt" {
   vpc_security_group_ids = [aws_security_group.sg.id]
 }
 
-# resource "aws_instance" "instance-2b" {
-#     ami                    = "ami-00c39f71452c08778"
-#     instance_type          = "t2.micro"
-#     subnet_id              = aws_subnet.sn_pub_az2b.id
-#     vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
-#     user_data              = "${base64encode(data.template_file.user_data.rendered)}"
-#     key_name               = "vockey"
-# }
 
 # LOAD BALANCER 
 

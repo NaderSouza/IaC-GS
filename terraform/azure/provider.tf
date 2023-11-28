@@ -6,9 +6,9 @@ terraform {
     }
   }
   backend "azurerm" {
-    resource_group_name  = "nader-gs"
-    storage_account_name = "nader3568"
-    container_name       = "tfstate"
+    resource_group_name  = "nader-pre-gs"
+    storage_account_name = "naderpregs"
+    container_name       = "load"
     key                  = "terraform.tfstate"
   }
 }
@@ -16,5 +16,6 @@ terraform {
 provider "azurerm" {
   features {}
   skip_provider_registration = true
+  use_msi                    = true
   alias                      = "cloud"
 }
