@@ -57,7 +57,7 @@ resource "azurerm_public_ip" "web_vm" {
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
   allocation_method   = "Dynamic"
-  domain_name_label = "staticsite-vm"
+  domain_name_label   = "staticsite-vm"
 }
 
 # Load Balancer
@@ -87,16 +87,10 @@ resource "azurerm_lb_rule" "web" {
   backend_port                   = 80
   frontend_ip_configuration_name = "public-ip"
   probe_id                       = azurerm_lb_probe.web.id
-  backend_address_pool_ids = [
-    azurerm_lb_backend_address_pool.web.id,
-  ]
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.web.id]
 }
 
 # Load Balancer Health Probe for HTTP Traffic
-
-data "template_file" "cloud_init" {
-  template = file("./init/cloud_init.sh")
-}
 resource "azurerm_lb_probe" "web" {
   name                = "health-probe"
   loadbalancer_id     = azurerm_lb.web.id
@@ -121,23 +115,24 @@ resource "azurerm_virtual_machine" "web_instance_1" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+
   storage_os_disk {
     name              = "staticsite-vm-disk-1"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
+
   os_profile {
     computer_name  = "staticsite-vm-1"
     admin_username = "vmuser"
     admin_password = "Password1234!"
-    custom_data    = base64encode(data.template_file.cloud_init.rendered)
+    custom_data    = base64encode(file("${path.module}/init/cloud_init.sh"))
   }
+
   os_profile_linux_config {
     disable_password_authentication = false
   }
-
-  // public ip
 }
 
 # Create network interface for the VMs
@@ -147,6 +142,7 @@ resource "azurerm_public_ip" "nic_1" {
   resource_group_name = azurerm_resource_group.web.name
   allocation_method   = "Static"
 }
+
 resource "azurerm_network_interface" "web_nic_1" {
   name                = "web-nic-1"
   location            = azurerm_resource_group.web.location
@@ -156,7 +152,7 @@ resource "azurerm_network_interface" "web_nic_1" {
     name                          = "ip-configuration1"
     subnet_id                     = azurerm_subnet.web.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id = azurerm_public_ip.nic_1.id
+    public_ip_address_id          = azurerm_public_ip.nic_1.id
   }
 }
 
@@ -172,8 +168,7 @@ output "lb_ip_address" {
   value = azurerm_public_ip.web.ip_address
 }
 
-
-//create second vm
+# Create the second VM
 resource "azurerm_public_ip" "nic_2" {
   name                = "public-ip-address-name2"
   location            = azurerm_resource_group.web.location
@@ -190,7 +185,7 @@ resource "azurerm_network_interface" "web_nic_2" {
     name                          = "ip-configuration2"
     subnet_id                     = azurerm_subnet.web.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id = azurerm_public_ip.nic_2.id
+    public_ip_address_id          = azurerm_public_ip.nic_2.id
   }
 }
 
@@ -199,5 +194,3 @@ resource "azurerm_network_interface_backend_address_pool_association" "web_nic2_
   ip_configuration_name   = "ip-configuration2"
   backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
 }
-
-
