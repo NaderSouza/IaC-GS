@@ -1,6 +1,6 @@
 # Grupo de Segurança que permitir o tráfego HTTP e SSH
 resource "aws_security_group" "allow_http" {
-  name        = "sg_teste_gs"
+  name        = "sg_teste_gs_2"
   description = "Allow HTTP inbound traffic"
 
 
@@ -47,7 +47,7 @@ data "template_file" "user_data" {
 
 # Load Balancer em uma única zona de disponibilidade
 resource "aws_elb" "web_elb" {
-  name               = "web-elb"
+  name               = "web-elb-2"
   availability_zones = ["us-east-1a"]
 
   listener {
