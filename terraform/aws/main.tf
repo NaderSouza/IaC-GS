@@ -71,7 +71,7 @@ resource "aws_elb" "web_elb" {
   connection_draining         = true
   connection_draining_timeout = 400
 
-  # tags = {
-  #   Name = "web-elb"
-  # }
+  tags = {
+    Name = "web-elb"
+  }
 }
