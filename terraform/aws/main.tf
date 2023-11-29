@@ -4,12 +4,19 @@ resource "aws_vpc" "web" {
   cidr_block = "172.0.0.0/16"
 }
 
-resource "aws_subnet" "web" {
+resource "aws_subnet" "web-1" {
   vpc_id                  = aws_vpc.web.id
   cidr_block              = "172.0.2.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 }
+resource "aws_subnet" "web-2" {
+  vpc_id                  = aws_vpc.web.id
+  cidr_block              = "172.0.3.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true
+}
+
 
 resource "aws_internet_gateway" "web" {
   vpc_id = aws_vpc.web.id
@@ -23,8 +30,12 @@ resource "aws_route_table" "web" {
   }
 }
 
-resource "aws_route_table_association" "web" {
-  subnet_id      = aws_subnet.web.id
+resource "aws_route_table_association" "web-1" {
+  subnet_id      = aws_subnet.web-1.id
+  route_table_id = aws_route_table.web.id
+}
+resource "aws_route_table_association" "web-2" {
+  subnet_id      = aws_subnet.web-2.id
   route_table_id = aws_route_table.web.id
 }
 
@@ -49,47 +60,63 @@ resource "aws_security_group" "web" {
   }
 }
 
-resource "aws_instance" "web_instance_1" {
+resource "aws_instance" "web-1" {
   ami                         = "ami-0230bd60aa48260c6"
   instance_type               = "t2.micro"
   availability_zone           = "us-east-1a"
   associate_public_ip_address = true
-  subnet_id                   = aws_subnet.web.id
+  subnet_id                   = aws_subnet.web-1.id
   vpc_security_group_ids      = [aws_security_group.web.id]
-
-  user_data              = base64encode(data.template_file.user_data.rendered)
+  user_data                   = base64encode(data.template_file.user_data.rendered)
 }
 
-
-
-resource "aws_instance" "web_instance_2" {
+resource "aws_instance" "web-2" {
   ami                         = "ami-0230bd60aa48260c6"
   instance_type               = "t2.micro"
   availability_zone           = "us-east-1a"
   associate_public_ip_address = true
-  subnet_id                   = aws_subnet.web.id
+  subnet_id                   = aws_subnet.web-1.id
   vpc_security_group_ids      = [aws_security_group.web.id]
+  user_data                   = base64encode(data.template_file.user_data.rendered)
 
-
-  user_data              = base64encode(data.template_file.user_data.rendered)
 }
 data "template_file" "user_data" {
   template = file("./script/user_data.sh")
 
 }
 
-resource "aws_elb" "web" {
-  name            = "web-1"
-  security_groups = [aws_security_group.web.id]
-  instances       = [aws_instance.web_instance_1.id, aws_instance.web_instance_2.id]
-  subnets         = [aws_subnet.web.id]
-
-  listener {
-    instance_port     = 80
-    instance_protocol = "http"
-    lb_port           = 80
-    lb_protocol       = "http"
-  }
+resource "aws_lb" "lb" {
+  name               = "lb-nhs"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.web-1.id, aws_subnet.web-2.id]
+  security_groups    = [aws_security_group.web.id]
 }
 
+resource "aws_lb_target_group" "tg" {
+  name     = "tg-hike"
+  protocol = "HTTP"
+  port     = "80"
+  vpc_id   = aws_vpc.web.id
+}
 
+resource "aws_lb_listener" "ec2_lb_listener" {
+  protocol          = "HTTP"
+  port              = "80"
+  load_balancer_arn = aws_lb.lb.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+resource "aws_lb_target_group_attachment" "web-1" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.web-1.id
+  port             = 80
+}
+
+resource "aws_lb_target_group_attachment" "web-2" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.web-2.id
+  port             = 80
+}
