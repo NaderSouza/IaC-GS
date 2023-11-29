@@ -59,10 +59,7 @@ resource "aws_instance" "web_instance_1" {
 
 }
 
-data "template_file" "user_data" {
-  template = file("./script/user_data.sh")
 
-}
 
 resource "aws_instance" "web_instance_2" {
   ami                         = "ami-0230bd60aa48260c6"
