@@ -105,6 +105,7 @@ resource "aws_efs_file_system_policy" "efs_policy" {
 POLICY
 }
 
+
 resource "aws_efs_mount_target" "mount1" {
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = aws_subnet.sn1.id
