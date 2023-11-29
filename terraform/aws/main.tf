@@ -1,72 +1,46 @@
-resource "aws_vpc" "vpc" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = "true"
+// create two ec2 with load balancer attached to them. The ec2s must have a apache server html page
+
+resource "aws_vpc" "web" {
+  cidr_block = "172.0.0.0/16"
 }
 
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc.id
-}
-
-resource "aws_subnet" "sn1" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = "true"
+resource "aws_subnet" "web" {
+  vpc_id                  = aws_vpc.web.id
+  cidr_block              = "172.0.2.0/24"
   availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = true
 }
 
-resource "aws_subnet" "sn2" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = "10.0.3.0/24"
-  map_public_ip_on_launch = "true"
-  availability_zone       = "us-east-1c"
+resource "aws_internet_gateway" "web" {
+  vpc_id = aws_vpc.web.id
 }
 
-resource "aws_route_table" "rt" {
-  vpc_id = aws_vpc.vpc.id
-
+resource "aws_route_table" "web" {
+  vpc_id = aws_vpc.web.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    gateway_id = aws_internet_gateway.web.id
   }
 }
 
-resource "aws_route_table_association" "rt_sn1" {
-  subnet_id      = aws_subnet.sn1.id
-  route_table_id = aws_route_table.rt.id
+resource "aws_route_table_association" "web" {
+  subnet_id      = aws_subnet.web.id
+  route_table_id = aws_route_table.web.id
 }
 
-resource "aws_route_table_association" "rt_sn2" {
-  subnet_id      = aws_subnet.sn2.id
-  route_table_id = aws_route_table.rt.id
-}
+resource "aws_security_group" "web" {
+  name        = "web"
+  description = "Allow web inbound traffic"
+  vpc_id      = aws_vpc.web.id
 
-
-# DATA  # --------------- SEMPRE ALTERAR QUANDO FOR SUBIR NOVAMENTE -  SECURITY GROUP
-resource "aws_security_group" "sg" {
-  name        = "sg"
-  description = "sg"
-  vpc_id      = aws_vpc.vpc.id
-
-
-# ------------------------------------------------------------------------------------
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["10.0.0.0/16"]
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -75,107 +49,49 @@ resource "aws_security_group" "sg" {
   }
 }
 
-resource "aws_efs_file_system" "efs" {
-  #  availability_zone_name = "us-east-1a"
-  encrypted = false
+resource "aws_instance" "web_instance_1" {
+  ami                         = "ami-0230bd60aa48260c6"
+  instance_type               = "t2.micro"
+  availability_zone           = "us-east-1a"
+  associate_public_ip_address = true
+  subnet_id                   = aws_subnet.web.id
+  vpc_security_group_ids      = [aws_security_group.web.id]
+
 }
 
-resource "aws_efs_file_system_policy" "efs_policy" {
-  file_system_id                     = aws_efs_file_system.efs.id
-  bypass_policy_lockout_safety_check = true
-  policy                             = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Id": "efs-policy-efs",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "*"
-            },
-            "Action": [
-                "elasticfilesystem:*"
-            ],
-            "Resource": [
-                "arn:aws:elasticfilesystem:us-east-1:${data.aws_caller_identity.current.account_id}:file-system/${aws_efs_file_system.efs.id}"
-            ]
-        }
-    ]
-}
-POLICY
-}
-
-
-resource "aws_efs_mount_target" "mount1" {
-  file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = aws_subnet.sn1.id
-  security_groups = [aws_security_group.sg.id]
-}
-
-resource "aws_efs_mount_target" "mount2" {
-  file_system_id  = aws_efs_file_system.efs.id
-  subnet_id       = aws_subnet.sn2.id
-  security_groups = [aws_security_group.sg.id]
-}
-
-# DATA  # --------------- SEMPRE ALTERAR QUANDO FOR SUBIR NOVAMENTE - LT - LB - TG - ASG
 data "template_file" "user_data" {
   template = file("./script/user_data.sh")
 
 }
 
+resource "aws_instance" "web_instance_2" {
+  ami                         = "ami-0230bd60aa48260c6"
+  instance_type               = "t2.micro"
+  availability_zone           = "us-east-1a"
+  associate_public_ip_address = true
+  subnet_id                   = aws_subnet.web.id
+  vpc_security_group_ids      = [aws_security_group.web.id]
 
-resource "aws_launch_template" "lt" {
-  name                   = "ltemplate-nader"
-  image_id               = "ami-02e136e904f3da870"
-  instance_type          = "t2.micro"
-  key_name               = "vockey"
-  user_data              = base64encode(data.template_file.user_data.rendered)
-  vpc_security_group_ids = [aws_security_group.sg.id]
+
 }
 
+data "template_file" "user_data" {
+  template = file("./script/user_data.sh")
 
-# LOAD BALANCER 
-
-resource "aws_lb" "lb" {
-  name               = "lb-nader"
-  load_balancer_type = "application"
-  subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
-  security_groups    = [aws_security_group.sg.id]
 }
 
-resource "aws_lb_target_group" "tg" {
-  name     = "tg-nader"
-  protocol = "HTTP"
-  port     = "80"
-  vpc_id   = aws_vpc.vpc.id
-}
+resource "aws_elb" "web" {
+  name            = "web"
+  security_groups = [aws_security_group.web.id]
+  instances       = [aws_instance.web_instance_1.id, aws_instance.web_instance_2.id]
+  subnets         = [aws_subnet.web.id]
 
-resource "aws_lb_listener" "ec2_lb_listener" {
-  protocol          = "HTTP"
-  port              = "80"
-  load_balancer_arn = aws_lb.lb.arn
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.tg.arn
+  listener {
+    instance_port     = 80
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
   }
 }
 
-resource "aws_autoscaling_group" "asg" {
-  name                = "asg-nader"
-  desired_capacity    = "4"
-  min_size            = "2"
-  max_size            = "8"
-  vpc_zone_identifier = [aws_subnet.sn1.id, aws_subnet.sn2.id]
-  target_group_arns   = [aws_lb_target_group.tg.arn]
-  launch_template {
-    id      = aws_launch_template.lt.id
-    version = "$Latest"
-  }
-  depends_on = [
-    aws_efs_mount_target.mount1,
-    aws_efs_mount_target.mount2
-  ]
-}
 
