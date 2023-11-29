@@ -1,5 +1,5 @@
 resource "azurerm_resource_group" "web" {
-  name     = "iac-resource"
+  name     = "nader-gs"
   location = "East US"
 }
 

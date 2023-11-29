@@ -93,7 +93,7 @@ resource "aws_lb" "lb" {
 }
 
 resource "aws_lb_target_group" "tg" {
-  name     = "tg-hike"
+  name     = "tg-nadin"
   protocol = "HTTP"
   port     = "80"
   vpc_id   = aws_vpc.web.id

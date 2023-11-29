@@ -6,8 +6,8 @@ terraform {
     }
   }
   backend "azurerm" {
-    resource_group_name  = "nader-pre-gs"
-    storage_account_name = "naderpregs"
+    resource_group_name  = "nader-gs"
+    storage_account_name = "nadergs"
     container_name       = "load"
     key                  = "terraform.tfstate"
   }
