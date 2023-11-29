@@ -79,7 +79,7 @@ data "template_file" "user_data" {
 }
 
 resource "aws_elb" "web" {
-  name            = "web"
+  name            = "web-1"
   security_groups = [aws_security_group.web.id]
   instances       = [aws_instance.web_instance_1.id, aws_instance.web_instance_2.id]
   subnets         = [aws_subnet.web.id]
