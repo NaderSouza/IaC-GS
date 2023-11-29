@@ -57,6 +57,7 @@ resource "aws_instance" "web_instance_1" {
   subnet_id                   = aws_subnet.web.id
   vpc_security_group_ids      = [aws_security_group.web.id]
 
+  user_data              = base64encode(data.template_file.user_data.rendered)
 }
 
 
@@ -70,8 +71,8 @@ resource "aws_instance" "web_instance_2" {
   vpc_security_group_ids      = [aws_security_group.web.id]
 
 
+  user_data              = base64encode(data.template_file.user_data.rendered)
 }
-
 data "template_file" "user_data" {
   template = file("./script/user_data.sh")
 
