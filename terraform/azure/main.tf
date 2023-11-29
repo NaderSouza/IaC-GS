@@ -57,7 +57,7 @@ resource "azurerm_public_ip" "web_vm" {
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
   allocation_method   = "Dynamic"
-  domain_name_label   = "staticsite-vm"
+  domain_name_label   = "staticsite-vm-2"
 }
 
 # Load Balancer
